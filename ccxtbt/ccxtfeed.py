@@ -109,7 +109,7 @@ class CCXTFeed(with_metaclass(MetaCCXTFeed, DataBase)):
                 if self._timeframe == bt.TimeFrame.Ticks:
                     return self._load_ticks()
                 else:
-                    self._fetch_ohlcv()
+                    self._fetch_ohlcv(fromdate=datetime.utcfromtimestamp(self._last_ts/1000.0))
                     ret = self._load_ohlcv()
                     if self.p.debug:
                         print('----     LOAD    ----')
@@ -173,7 +173,7 @@ class CCXTFeed(with_metaclass(MetaCCXTFeed, DataBase)):
 
             # Check to see if dropping the latest candle will help with
             # exchanges which return partial data
-            if self.p.drop_newest:
+            if self.p.drop_newest and len(data) > 0:
                 del data[-1]
 
             for ohlcv in data:
