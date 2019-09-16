@@ -178,6 +178,24 @@ class CCXTBroker(with_metaclass(MetaCCXTBroker, BrokerBase)):
             pos = pos.clone()
         return pos
 
+    def update_position_force(self, data):
+        if self.store.exchange.id == 'bitmex' and data._dataname == 'BTC/USD':
+            sum_of_currentQty = 0
+            avg_of_price = None
+            # x = collections.Counter([d['symbol'] for d in self.store.exchange.privateGetPosition()])
+            for p in self.store.exchange.privateGetPosition():
+                if p['symbol'] == 'XBTUSD':
+                    if avg_of_price is None:
+                        avg_of_price = float(p['avgEntryPrice'] if p['avgEntryPrice'] is not None else 0)
+                    else:
+                        avg_of_price = (float(avg_of_price) * float(sum_of_currentQty) + float(p['avgEntryPrice']) * float(p['currentQty'])) \
+                                       / (float(sum_of_currentQty) + float(p['currentQty']))
+                    sum_of_currentQty += p['currentQty']
+
+            self.positions[data._dataname].fix(sum_of_currentQty, avg_of_price)  # tetsuya
+        else:
+            raise NotImplementedError("This is not implemented for exchanges other than bitmex and/or symbol")
+
     def next(self):
 
         if self.debug:
