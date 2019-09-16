@@ -220,6 +220,9 @@ class CCXTBroker(with_metaclass(MetaCCXTBroker, BrokerBase)):
                 pos = self.getposition(o_order.data, clone=False)
                 pos.update(o_order.size, o_order.price)
                 o_order.completed()
+                o_order.executed.comm = ccxt_order['fee'] if ccxt_order['fee'] is not None else 0  # TODO: check on main net
+                o_order.executed.size = ccxt_order['filled']
+                o_order.executed.price = ccxt_order['average']
                 self.notify(o_order)
                 self.open_orders.remove(o_order)
 
