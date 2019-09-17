@@ -293,6 +293,19 @@ class CCXTBroker(with_metaclass(MetaCCXTBroker, BrokerBase)):
     def get_orders_open(self, safe=False):
         return self.store.fetch_open_orders()
 
+    def update_open_orders_force(self, owner, data):
+        orders = self.get_orders_open()
+        self.open_orders = list()
+        for o in orders:
+            _order = self.store.fetch_order(o['id'], o['symbol'])
+            order = CCXTOrder(owner, data, _order)
+            if _order[self.mappings['open_order']['key']] == self.mappings['open_order']['value']:
+                order.accept(broker=self)
+            else:
+                pass
+            self.open_orders.append(order)
+            self.notify(order
+
     def private_end_point(self, type, endpoint, params):
         '''
         Open method to allow calls to be made to any private end point.
