@@ -304,7 +304,7 @@ class CCXTBroker(with_metaclass(MetaCCXTBroker, BrokerBase)):
             else:
                 pass
             self.open_orders.append(order)
-            self.notify(order
+            self.notify(order)
 
     def private_end_point(self, type, endpoint, params):
         '''
