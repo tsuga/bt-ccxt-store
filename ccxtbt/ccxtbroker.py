@@ -179,7 +179,7 @@ class CCXTBroker(with_metaclass(MetaCCXTBroker, BrokerBase)):
         return pos
 
     def update_position_force(self, data):
-        if self.store.exchange.id == 'bitmex' and (data._dataname == 'BTC/USD' or data._dataname == 'ETH/BTC'):
+        if self.store.exchange.id == 'bitmex' and data._dataname in ['BTC/USD','ETH/BTC', 'ETH/USD']:
             sum_of_currentQty = 0
             avg_of_price = None
             # x = collections.Counter([d['symbol'] for d in self.store.exchange.privateGetPosition()])
@@ -211,7 +211,7 @@ class CCXTBroker(with_metaclass(MetaCCXTBroker, BrokerBase)):
 
             # Get the order
             # ccxt_order = self.store.fetch_order(oID, o_order.data.symbol)
-            ccxt_order = self.store.fetch_order(oID, o_order.ccxt_order['id'])
+            ccxt_order = self.store.fetch_order(oID, o_order.ccxt_order['symbol'])
 
             if self.debug:
                 print(json.dumps(ccxt_order, indent=self.indent))
