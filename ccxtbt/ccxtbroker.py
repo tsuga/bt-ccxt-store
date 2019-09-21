@@ -179,29 +179,29 @@ class CCXTBroker(with_metaclass(MetaCCXTBroker, BrokerBase)):
         return pos
 
     def update_position_force(self, data):
-        if self.store.exchange.id == 'bitmex' and data._dataname == 'BTC/USD':
+        if self.store.exchange.id == 'bitmex' and (data._dataname == 'BTC/USD' or data._dataname == 'ETH/BTC'):
             sum_of_currentQty = 0
             avg_of_price = None
             # x = collections.Counter([d['symbol'] for d in self.store.exchange.privateGetPosition()])
             for p in self.store.exchange.privateGetPosition():
-                if p['symbol'] == 'XBTUSD':
+                if p['symbol'] == self.store.exchange.market_id(data.symbol):
                     if avg_of_price is None:
                         avg_of_price = float(p['avgEntryPrice'] if p['avgEntryPrice'] is not None else 0)
                     else:
                         avg_of_price = (float(avg_of_price) * float(sum_of_currentQty) + float(p['avgEntryPrice']) * float(p['currentQty'])) \
                                        / (float(sum_of_currentQty) + float(p['currentQty']))
                     sum_of_currentQty += p['currentQty']
-
-            self.positions[data._dataname].fix(sum_of_currentQty, avg_of_price)  # tetsuya
+            self.positions[data._dataname].fix(sum_of_currentQty, avg_of_price)
         else:
             raise NotImplementedError("This is not implemented for exchanges other than bitmex and/or symbol")
+
 
     def next(self):
 
         if self.debug:
             print('Broker next() called')
 
-        for o_order in list(self.open_orders):
+        for o_order in list(self.open_orders):  # TODO: filter orders with target symbol
             oID = o_order.ccxt_order['id']
 
             # Print debug before fetching so we know which order is giving an
@@ -210,7 +210,8 @@ class CCXTBroker(with_metaclass(MetaCCXTBroker, BrokerBase)):
                 print('Fetching Order ID: {}'.format(oID))
 
             # Get the order
-            ccxt_order = self.store.fetch_order(oID, o_order.data.symbol)
+            # ccxt_order = self.store.fetch_order(oID, o_order.data.symbol)
+            ccxt_order = self.store.fetch_order(oID, o_order.ccxt_order['id'])
 
             if self.debug:
                 print(json.dumps(ccxt_order, indent=self.indent))
@@ -223,8 +224,17 @@ class CCXTBroker(with_metaclass(MetaCCXTBroker, BrokerBase)):
                 o_order.executed.comm = ccxt_order['fee'] if ccxt_order['fee'] is not None else 0  # TODO: check on main net
                 o_order.executed.size = ccxt_order['filled']
                 o_order.executed.price = ccxt_order['average']
+                # TODO: to update execute ?
                 self.notify(o_order)
                 self.open_orders.remove(o_order)
+                pass
+            elif ccxt_order[self.mappings['open_order']['key']] == self.mappings['open_order']['value']:
+                o_order.accept(broker=self)
+                self.notify(o_order)
+                self.open_orders.remove(o_order)
+                self.open_orders.append(o_order)
+                pass
+
 
     def _submit(self, owner, data, exectype, side, amount, price, params):
         order_type = self.order_types.get(exectype) if exectype else 'market'
@@ -303,6 +313,7 @@ class CCXTBroker(with_metaclass(MetaCCXTBroker, BrokerBase)):
                 order.accept(broker=self)
             else:
                 pass
+
             self.open_orders.append(order)
             self.notify(order)
 
