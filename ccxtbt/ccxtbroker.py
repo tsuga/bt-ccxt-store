@@ -300,11 +300,15 @@ class CCXTBroker(with_metaclass(MetaCCXTBroker, BrokerBase)):
             self.notify(order)
         return order
 
-    def get_orders_open(self, safe=False):
-        return self.store.fetch_open_orders()
+    def get_orders_open(self, safe=False, symbol=None):
+        ret = self.store.fetch_open_orders()
+        if symbol:
+            return [o for o in ret if o["symbol"] == symbol]
+        return ret
 
-    def update_open_orders_force(self, owner, data, simulated=False):
-        orders = self.get_orders_open()
+    def update_open_orders_force(self, owner, data, simulated=False, filter_by_data_symbol=False):
+        filter_symbol = data.symbol if filter_by_data_symbol else None
+        orders = self.get_orders_open(symbol=filter_symbol)
         self.open_orders = list()
         for o in orders:
             _order = self.store.fetch_order(o['id'], o['symbol'])
