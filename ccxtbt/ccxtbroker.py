@@ -179,7 +179,7 @@ class CCXTBroker(with_metaclass(MetaCCXTBroker, BrokerBase)):
         return pos
 
     def update_position_force(self, data):
-        if self.store.exchange.id == 'bitmex' and data._dataname in ['BTC/USD','ETH/BTC', 'ETH/USD']:
+        if self.store.exchange.id == 'bitmex' and data._dataname in ['BTC/USD','ETH/BTC', 'ETH/USD', 'XBTU19', 'XBTZ19', 'XBTH20']:
             sum_of_currentQty = 0
             avg_of_price = None
             # x = collections.Counter([d['symbol'] for d in self.store.exchange.privateGetPosition()])
